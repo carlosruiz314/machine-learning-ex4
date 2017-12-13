@@ -62,23 +62,42 @@ Theta2_grad = zeros(size(Theta2));
 %               and Theta2_grad from Part 2.
 %
 
+% Add bias term to input x
+X_train = [ones(m,1) X];
+
+% Initialize capital delta error matrices:
+Delta1 = zeros(hidden_layer_size, input_layer_size + 1);
+Delta2 = zeros(num_labels, hidden_layer_size + 1);
+
+% Forward propagation. Store the different activation values for back-propagation
+a2 = [ones(m,1) sigmoid(X_train * Theta1')];
+pred = sigmoid(a2 * Theta2');
 
 
+% Loop through training examples and classes to calculate the neural network's cost at the current values of Theta1 and Theta2
+for i=1:m
+yVal = [];
+	for k=1:num_labels
+		% Create a binary vector for all the class labels
+		yVal = [yVal; (k==y(i))];
+	end
+	J = J + (-1/m * (yVal' * log(pred(i,:))' + (1-yVal)' * log(1-pred(i,:))'));
 
+	% Backpropagation:
+	% Calculate delta error vectors:
+	delta3 = pred(i,:)' - yVal;
+	delta2 = (Theta2(:,2:end)' * delta3) .* a2(i,2:end)' .* (1-a2(i,2:end)');
+	% Calculate capital delta error matrices:
+	Delta1 += delta2 * X_train(i,:);
+	Delta2 += delta3 * a2(i,:);
+end
 
+% Add the regularization term to the cost function
+J = J + lambda/(2*m) * (sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2)));
 
-
-
-
-
-
-
-
-
-
-
-
-
+% Store the gradients for each layer:
+Theta1_grad = 1/m * (Delta1 + [zeros(hidden_layer_size,1) lambda*Theta1(:,2:end)]);
+Theta2_grad = 1/m * (Delta2 + [zeros(num_labels,1) lambda*Theta2(:,2:end)]);
 
 % -------------------------------------------------------------
 
